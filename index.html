@@ -1689,6 +1689,77 @@
       } catch (e) {}
     }
 
+    async function saveFileNativeOrWeb({ filename, data, isBase64 = false, mimeType = 'application/octet-stream', successMsg = 'تم الحفظ بنجاح' }) {
+      const cap = window.Capacitor;
+      const fs = cap && cap.Plugins && cap.Plugins.Filesystem;
+      const share = cap && cap.Plugins && cap.Plugins.Share;
+
+      if (fs && typeof fs.writeFile === 'function') {
+        let savedUri = null;
+        let savedLocation = 'Documents/Cashier-V1';
+        try {
+          const writeOpts = {
+            path: 'Cashier-V1/' + filename,
+            data: data,
+            directory: 'DOCUMENTS',
+            recursive: true
+          };
+          if (!isBase64) writeOpts.encoding = 'utf8';
+          const res = await fs.writeFile(writeOpts);
+          savedUri = res && res.uri ? res.uri : null;
+        } catch (errDoc) {
+          try {
+            const cacheOpts = {
+              path: filename,
+              data: data,
+              directory: 'CACHE',
+              recursive: true
+            };
+            if (!isBase64) cacheOpts.encoding = 'utf8';
+            const resCache = await fs.writeFile(cacheOpts);
+            savedUri = resCache && resCache.uri ? resCache.uri : null;
+            savedLocation = 'مجلد التطبيق المؤقت';
+          } catch (errCache) {
+            showToast('تعذر حفظ الملف على الهاتف: ' + (errCache.message || errDoc.message || ''), 'error');
+            return false;
+          }
+        }
+
+        showToast(successMsg + ' (' + savedLocation + ')', 'success');
+
+        if (savedUri && share && typeof share.share === 'function') {
+          try {
+            await share.share({
+              title: filename,
+              url: savedUri,
+              dialogTitle: 'حفظ أو مشاركة الملف'
+            });
+          } catch (e) {}
+        }
+        return true;
+      }
+
+      // Web browser fallback
+      try {
+        let url;
+        let shouldRevoke = false;
+        if (isBase64) {
+          url = 'data:' + mimeType + ';base64,' + data;
+        } else {
+          const blob = new Blob([data], { type: mimeType });
+          url = URL.createObjectURL(blob);
+          shouldRevoke = true;
+        }
+        triggerBrowserDownload(url, filename);
+        if (shouldRevoke) setTimeout(() => URL.revokeObjectURL(url), 1500);
+        showToast(successMsg, 'success');
+        return true;
+      } catch (e) {
+        showToast('تعذر حفظ الملف', 'error');
+        return false;
+      }
+    }
+
     function showToast(message, type = 'success') {
       const el = document.getElementById('toastNotice');
       const isError = type === 'error';
@@ -4336,13 +4407,14 @@
 
       const cleanNum = String(o.orderNumber || 'invoice').replace(/[^0-9A-Za-z_-]/g, '');
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `invoice-${cleanNum || 'order'}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      showToast('تم حفظ الفاتورة بصيغة JPG', 'success');
+      const base64Data = dataUrl.split(',')[1];
+      saveFileNativeOrWeb({
+        filename: `invoice-${cleanNum || 'order'}.jpg`,
+        data: base64Data,
+        isBase64: true,
+        mimeType: 'image/jpeg',
+        successMsg: 'تم حفظ الفاتورة بصيغة JPG'
+      });
     }
 
     /* ==================== النسخ الاحتياطي ==================== */
@@ -4356,16 +4428,14 @@
         deletedOrders,
         customers
       };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cashier-v1-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('تم تصدير النسخة الاحتياطية بنجاح', 'success');
+      const jsonText = JSON.stringify(payload, null, 2);
+      saveFileNativeOrWeb({
+        filename: `cashier-v1-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        data: jsonText,
+        isBase64: false,
+        mimeType: 'application/json',
+        successMsg: 'تم تصدير النسخة الاحتياطية بنجاح'
+      });
     }
 
     function importBackupJson(event) {
