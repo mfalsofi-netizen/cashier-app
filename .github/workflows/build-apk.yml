@@ -64,8 +64,6 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
 ```[span_1](start_span)[span_1](end_span)
 
-### خطوات الاستبدال والتشغيل:
-1. افتح ملف `.github/workflows/build-apk.yml` في مستودعك على GitHub، واحذف المحتوى القديم بالكامل ثم الصق الكود أعلاه واضغط **Commit changes**[span_2](start_span)[span_2](end_span).
-2. انتظر اكتمال البناء الجديد في تبويب **Actions**، ثم حمّل `cashier-v1-debug-apk` من **Artifacts** وثبّته على هاتفك[span_3](start_span)[span_3](end_span).
-
-http://googleusercontent.com/lmdx_content/mlZMaYNYsonrfxBiOGpYRUCyqAlbPTICfDyXgEchOtfsKhrQyYAXqyHzwuqZfPAmcxPOLMUdFyaqmvTOBXyfDKBjrHUdIMjdnTHRmBtylLUWayhVnauIbGxIFdTETWdYcsvApDDWJOtFDaqzcPnLsCiflvYSfTsbSBMjJUmaRSChDMnMtVDmfpmizwzhNYEEpMHJNFUYyfchhGBSFLKQZvWlaVEWfJgBAbzKZfVeBXhwOLxsOQyCuGNmUlxTmrJfdDtqixLNFPTcdpyKWKdDCdEpsQddjQVnHjXvpzQWqUssjrhprZRXG1438501
+### نصيحة سريعة عند اللصق على الهاتف:
+* احذف كل ما في المحرر أولاً ثم الصق الكود دون إضافة أي فراغات قبل سطر `name:` أو تعديل المسافات البادئة[span_2](start_span)[span_2](end_span).
+* اضغط **Commit changes...** ثم **Commit changes**، وبعدها راقب تبويب **Actions**[span_3](start_span)[span_3](end_span).
